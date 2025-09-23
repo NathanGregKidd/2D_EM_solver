@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Transmission Line Geometry Designer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>2D Transmission Line Geometry Designer</h1>
+            <p>Create and configure transmission line cross-sectional geometries</p>
+        </header>
+        
+        <div class="main-content">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <h2>Geometry Controls</h2>
+                
+                <!-- Transmission Line Type Selection -->
+                <div class="control-group">
+                    <label for="line-type">Transmission Line Type:</label>
+                    <select id="line-type">
+                        <option value="microstrip">Microstrip</option>
+                        <option value="stripline">Stripline</option>
+                        <option value="coplanar">Coplanar Waveguide</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+                
+                <!-- Dimensions -->
+                <div class="control-group">
+                    <h3>Dimensions (μm)</h3>
+                    <div class="dimension-inputs">
+                        <label for="trace-width">Trace Width:</label>
+                        <input type="number" id="trace-width" value="100" min="1" step="1">
+                        
+                        <label for="trace-height">Trace Height:</label>
+                        <input type="number" id="trace-height" value="35" min="1" step="1">
+                        
+                        <label for="substrate-height">Substrate Height:</label>
+                        <input type="number" id="substrate-height" value="1600" min="1" step="1">
+                        
+                        <label for="substrate-width">Substrate Width:</label>
+                        <input type="number" id="substrate-width" value="2000" min="1" step="1">
+                    </div>
+                </div>
+                
+                <!-- Material Properties -->
+                <div class="control-group">
+                    <h3>Material Properties</h3>
+                    <div class="material-inputs">
+                        <label for="substrate-er">Substrate εr:</label>
+                        <input type="number" id="substrate-er" value="4.4" min="1" step="0.1">
+                        
+                        <label for="substrate-loss">Loss Tangent:</label>
+                        <input type="number" id="substrate-loss" value="0.02" min="0" step="0.001">
+                        
+                        <label for="conductor-sigma">Conductor σ (S/m):</label>
+                        <input type="number" id="conductor-sigma" value="58000000" min="1" step="1000000">
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="control-group">
+                    <h3>Actions</h3>
+                    <button id="redraw-btn" class="btn primary">Update Geometry</button>
+                    <button id="export-btn" class="btn secondary">Export Geometry</button>
+                    <button id="clear-btn" class="btn secondary">Clear</button>
+                </div>
+                
+                <!-- Calculated Parameters -->
+                <div class="control-group">
+                    <h3>Estimated Parameters</h3>
+                    <div class="calculated-params">
+                        <div class="param">
+                            <label>Z₀ (approx):</label>
+                            <span id="z0-estimate">-- Ω</span>
+                        </div>
+                        <div class="param">
+                            <label>Effective εr:</label>
+                            <span id="eff-er-estimate">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Drawing Canvas -->
+            <div class="canvas-container">
+                <h2>Cross-Section View</h2>
+                <canvas id="geometry-canvas" width="800" height="600"></canvas>
+                <div class="canvas-info">
+                    <p>Canvas shows the cross-sectional view of the transmission line geometry</p>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color conductor"></div>
+                            <span>Conductor</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color substrate"></div>
+                            <span>Substrate</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color air"></div>
+                            <span>Air/Vacuum</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Modal -->
+    <div id="export-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Export Geometry Data</h2>
+            <textarea id="export-data" rows="20" cols="80" readonly></textarea>
+            <div class="modal-actions">
+                <button id="copy-data-btn" class="btn primary">Copy to Clipboard</button>
+                <button id="download-data-btn" class="btn secondary">Download JSON</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="geometry.js"></script>
+</body>
+</html>
