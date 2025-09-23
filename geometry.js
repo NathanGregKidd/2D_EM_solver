@@ -20,6 +20,7 @@ class TransmissionLineGeometry {
         document.getElementById('line-type').addEventListener('change', () => this.updateGeometry());
         document.getElementById('trace-width').addEventListener('input', () => this.updateGeometry());
         document.getElementById('trace-height').addEventListener('input', () => this.updateGeometry());
+        document.getElementById('ground-thickness').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-width').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-er').addEventListener('input', () => this.updateEstimatedParams());
@@ -110,7 +111,7 @@ class TransmissionLineGeometry {
         this.ctx.fillRect(0, 0, this.canvas.width, substrateY);
         
         // Draw trace based on transmission line type
-        this.drawTrace(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight);
+        this.drawTrace(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, params.groundThickness * this.scale);
         
         // Add dimensions annotations
         this.drawDimensions(traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, params);
@@ -119,16 +120,22 @@ class TransmissionLineGeometry {
         this.drawCoordinateSystem();
     }
     
-    drawTrace(lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight) {
+    drawTrace(lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, groundThickness = 0) {
         this.ctx.fillStyle = '#e67e22'; // Orange for conductor
         this.ctx.strokeStyle = '#d35400';
         this.ctx.lineWidth = 2;
         
         switch (lineType) {
             case 'microstrip':
-                // Single trace on top of substrate
+                // Signal trace on top of substrate
                 this.ctx.fillRect(traceX, traceY, traceWidth, traceHeight);
                 this.ctx.strokeRect(traceX, traceY, traceWidth, traceHeight);
+                
+                // Ground plane below substrate (different color)
+                this.ctx.fillStyle = '#8b4513'; // Brown for ground plane
+                this.ctx.strokeStyle = '#654321';
+                this.ctx.fillRect(substrateX, substrateY + substrateHeight, substrateWidth, groundThickness);
+                this.ctx.strokeRect(substrateX, substrateY + substrateHeight, substrateWidth, groundThickness);
                 break;
                 
             case 'stripline':
@@ -258,6 +265,7 @@ class TransmissionLineGeometry {
             lineType: document.getElementById('line-type').value,
             traceWidth: parseFloat(document.getElementById('trace-width').value),
             traceHeight: parseFloat(document.getElementById('trace-height').value),
+            groundThickness: parseFloat(document.getElementById('ground-thickness').value),
             substrateHeight: parseFloat(document.getElementById('substrate-height').value),
             substrateWidth: parseFloat(document.getElementById('substrate-width').value),
             substrateEr: parseFloat(document.getElementById('substrate-er').value),
@@ -314,6 +322,7 @@ class TransmissionLineGeometry {
             dimensions: {
                 traceWidth_um: params.traceWidth,
                 traceHeight_um: params.traceHeight,
+                groundThickness_um: params.groundThickness,
                 substrateWidth_um: params.substrateWidth,
                 substrateHeight_um: params.substrateHeight
             },
