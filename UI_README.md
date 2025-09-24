@@ -12,14 +12,22 @@ This web-based UI allows users to create and configure 2D transmission line cros
 - **Coplanar Waveguide**: Signal trace with ground planes on the same layer
 - **Custom**: Basic geometry for user customization
 
+### Supported Transmission Line Types
+- **Microstrip**: Single trace on substrate with ground plane below
+- **Stripline**: Trace embedded between ground planes
+- **Coplanar Waveguide**: Trace with side ground planes on same layer  
+- **Coplanar Waveguide with Ground**: Coplanar waveguide with additional ground plane below substrate
+- **Grounded Coplanar Waveguide**: Coplanar waveguide with ground plane below and vias connecting coplanar grounds to bottom ground
+- **Custom**: User-defined configuration for special cases
+
 ### Geometry Controls
-- **Dimensions**: Configure trace width, height, substrate dimensions (in micrometers)
+- **Dimensions**: Configure trace width, height, ground plane thickness, coplanar gap width, substrate dimensions (in micrometers)
 - **Materials**: Set substrate dielectric constant (εr), loss tangent, and conductor properties
 - **Real-time Updates**: Geometry visualization and parameter estimation update automatically
 
 ### Visualization
 - **Cross-section View**: Canvas-based rendering of the transmission line geometry
-- **Color-coded Materials**: Conductors (orange), substrate (green), air (light gray)
+- **Color-coded Materials**: Signal conductor (orange), ground plane (brown), vias (gray), substrate (green), air (light gray)
 - **Dimensional Annotations**: Key measurements displayed on the geometry
 - **Grid Background**: Reference grid for scale
 
@@ -63,6 +71,8 @@ Exported geometry data includes:
   "dimensions": {
     "traceWidth_um": number,
     "traceHeight_um": number,
+    "groundThickness_um": number,
+    "coplanarGap_um": number,
     "substrateWidth_um": number,
     "substrateHeight_um": number
   },

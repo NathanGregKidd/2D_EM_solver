@@ -25,6 +25,8 @@
                         <option value="microstrip">Microstrip</option>
                         <option value="stripline">Stripline</option>
                         <option value="coplanar">Coplanar Waveguide</option>
+                        <option value="coplanar-with-ground">Coplanar Waveguide with Ground</option>
+                        <option value="grounded-coplanar">Grounded Coplanar Waveguide</option>
                         <option value="custom">Custom</option>
                     </select>
                 </div>
@@ -38,6 +40,12 @@
                         
                         <label for="trace-height">Trace Height:</label>
                         <input type="number" id="trace-height" value="35" min="1" step="1">
+                        
+                        <label for="ground-thickness">Ground Plane Thickness:</label>
+                        <input type="number" id="ground-thickness" value="100" min="1" step="1">
+                        
+                        <label for="coplanar-gap">Coplanar Gap Width:</label>
+                        <input type="number" id="coplanar-gap" value="40" min="1" step="1">
                         
                         <label for="substrate-height">Substrate Height:</label>
                         <input type="number" id="substrate-height" value="1600" min="1" step="1">
@@ -95,7 +103,15 @@
                     <div class="legend">
                         <div class="legend-item">
                             <div class="legend-color conductor"></div>
-                            <span>Conductor</span>
+                            <span>Signal Conductor</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color ground"></div>
+                            <span>Ground Plane</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color via"></div>
+                            <span>Vias</span>
                         </div>
                         <div class="legend-item">
                             <div class="legend-color substrate"></div>
