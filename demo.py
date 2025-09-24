@@ -21,7 +21,7 @@ def demonstrate_microstrip():
     print("MICROSTRIP TRANSMISSION LINE DEMONSTRATION")
     print("="*60)
     
-    # Create realistic microstrip geometry
+    # Create realistic microstrip geometry with explicit ground plane
     # Using thicker trace for better numerical stability
     geometry = create_microstrip_geometry(
         substrate_width=0.008,    # 8mm wide substrate (plenty of margin)
@@ -29,14 +29,17 @@ def demonstrate_microstrip():
         trace_width=0.003,       # 3mm trace width
         trace_thickness=0.0003,   # 300μm thick (for numerical stability)
         substrate_er=4.6,         # FR4 dielectric constant
-        conductor_name="signal"
+        conductor_name="signal"   # Now includes explicit ground plane
     )
     
     print("Geometry created:")
     print(f"  Substrate: 8.0 × 1.6 mm (εᵣ = 4.6)")
     print(f"  Trace: 3.0 × 0.3 mm")
+    print(f"  Ground plane: 8.0 × 0.3 mm (full width)")
     print(f"  Regions: {len(geometry.regions)}")
     print(f"  Conductors: {len(geometry.get_conductor_regions())}")
+    for i, conductor in enumerate(geometry.get_conductor_regions()):
+        print(f"    {i+1}. {conductor.material.name}: ({conductor.x_min:.3f}, {conductor.y_min:.3f}) to ({conductor.x_max:.3f}, {conductor.y_max:.3f})")
     
     # Solver with good resolution
     params = SolverParameters(nx=80, ny=80, frequency=1e9)
@@ -45,13 +48,13 @@ def demonstrate_microstrip():
     print(f"  Grid: {params.nx} × {params.ny}")
     print(f"  Frequency: 1.0 GHz")
     
-    # Calculate transmission line parameters
+    # Calculate transmission line parameters with proper conductor names
     print("\nSolving electromagnetic field problem...")
     tl_params = calculate_transmission_line_parameters(
         geometry=geometry,
         parameters=params,
         frequency=1e9,
-        conductor_names=("signal", "ground")
+        conductor_names=("signal", "ground")  # Now matches actual conductor material names
     )
     
     # Calculate analytical result for comparison
@@ -70,10 +73,10 @@ def demonstrate_microstrip():
     print(f"  Inductance: {tl_params.L*1e9:.1f} nH/m")
     print(f"  Effective εᵣ: {tl_params.epsilon_eff:.2f}")
     
-    # Create field visualization
+    # Create field visualization with proper conductor voltages
     print("\nGenerating field visualization...")
     solver = FieldSolver2D(geometry, params)
-    solution = solver.solve_electrostatic({"signal": 1.0, "ground": 0.0})
+    solution = solver.solve_electrostatic({"signal": 1.0, "ground": 0.0})  # Proper ground reference
     
     fig = create_complete_field_plot(solution)
     fig.suptitle(f"Microstrip Line (Z₀ = {tl_params.Z0:.1f} Ω)", fontsize=14)
