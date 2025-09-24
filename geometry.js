@@ -173,6 +173,80 @@ class TransmissionLineGeometry {
                 this.ctx.strokeRect(traceX + traceWidth + gapWidth, traceY, groundWidth, traceHeight);
                 break;
                 
+            case 'coplanar-with-ground':
+                // Coplanar waveguide with ground plane below substrate
+                const gapWidthWG = 20; // pixels
+                const groundWidthWG = 50; // pixels
+                
+                // Signal trace
+                this.ctx.fillRect(traceX, traceY, traceWidth, traceHeight);
+                this.ctx.strokeRect(traceX, traceY, traceWidth, traceHeight);
+                
+                // Left ground plane (coplanar)
+                this.ctx.fillRect(traceX - gapWidthWG - groundWidthWG, traceY, groundWidthWG, traceHeight);
+                this.ctx.strokeRect(traceX - gapWidthWG - groundWidthWG, traceY, groundWidthWG, traceHeight);
+                
+                // Right ground plane (coplanar)
+                this.ctx.fillRect(traceX + traceWidth + gapWidthWG, traceY, groundWidthWG, traceHeight);
+                this.ctx.strokeRect(traceX + traceWidth + gapWidthWG, traceY, groundWidthWG, traceHeight);
+                
+                // Ground plane below substrate (different color)
+                this.ctx.fillStyle = '#8b4513'; // Brown for ground plane
+                this.ctx.strokeStyle = '#654321';
+                this.ctx.fillRect(substrateX, substrateY + substrateHeight, substrateWidth, groundThickness);
+                this.ctx.strokeRect(substrateX, substrateY + substrateHeight, substrateWidth, groundThickness);
+                break;
+                
+            case 'grounded-coplanar':
+                // Grounded coplanar waveguide with vias connecting ground planes
+                const gapWidthGC = 20; // pixels
+                const groundWidthGC = 50; // pixels
+                
+                // Signal trace
+                this.ctx.fillRect(traceX, traceY, traceWidth, traceHeight);
+                this.ctx.strokeRect(traceX, traceY, traceWidth, traceHeight);
+                
+                // Left ground plane (coplanar)
+                this.ctx.fillRect(traceX - gapWidthGC - groundWidthGC, traceY, groundWidthGC, traceHeight);
+                this.ctx.strokeRect(traceX - gapWidthGC - groundWidthGC, traceY, groundWidthGC, traceHeight);
+                
+                // Right ground plane (coplanar)
+                this.ctx.fillRect(traceX + traceWidth + gapWidthGC, traceY, groundWidthGC, traceHeight);
+                this.ctx.strokeRect(traceX + traceWidth + gapWidthGC, traceY, groundWidthGC, traceHeight);
+                
+                // Ground plane below substrate (different color)
+                this.ctx.fillStyle = '#8b4513'; // Brown for ground plane
+                this.ctx.strokeStyle = '#654321';
+                this.ctx.fillRect(substrateX, substrateY + substrateHeight, substrateWidth, groundThickness);
+                this.ctx.strokeRect(substrateX, substrateY + substrateHeight, substrateWidth, groundThickness);
+                
+                // Vias connecting coplanar grounds to bottom ground plane
+                this.ctx.fillStyle = '#666666'; // Gray for vias
+                this.ctx.strokeStyle = '#444444';
+                const viaRadius = 3;
+                const viaSpacing = 40; // pixels
+                
+                // Left side vias
+                for (let y = traceY + traceHeight; y <= substrateY + substrateHeight; y += viaSpacing) {
+                    if (y + viaRadius <= substrateY + substrateHeight) {
+                        this.ctx.beginPath();
+                        this.ctx.arc(traceX - gapWidthGC - groundWidthGC/2, y, viaRadius, 0, 2 * Math.PI);
+                        this.ctx.fill();
+                        this.ctx.stroke();
+                    }
+                }
+                
+                // Right side vias
+                for (let y = traceY + traceHeight; y <= substrateY + substrateHeight; y += viaSpacing) {
+                    if (y + viaRadius <= substrateY + substrateHeight) {
+                        this.ctx.beginPath();
+                        this.ctx.arc(traceX + traceWidth + gapWidthGC + groundWidthGC/2, y, viaRadius, 0, 2 * Math.PI);
+                        this.ctx.fill();
+                        this.ctx.stroke();
+                    }
+                }
+                break;
+                
             case 'custom':
                 // Basic trace for custom (user can extend this)
                 this.ctx.fillRect(traceX, traceY, traceWidth, traceHeight);
@@ -304,6 +378,21 @@ class TransmissionLineGeometry {
             }
             
             effEr = er;
+            
+        } else if (params.lineType === 'coplanar') {
+            // Basic coplanar waveguide approximation
+            z0 = 50; // Simplified approximation
+            effEr = (params.substrateEr + 1) / 2;
+            
+        } else if (params.lineType === 'coplanar-with-ground') {
+            // Coplanar waveguide with ground plane - similar to coplanar but with ground influence
+            z0 = 45; // Slightly lower due to ground plane influence
+            effEr = (params.substrateEr + 1) / 2 + 0.1; // Slightly higher effective permittivity
+            
+        } else if (params.lineType === 'grounded-coplanar') {
+            // Grounded coplanar waveguide - lowest impedance due to strong ground coupling
+            z0 = 40; // Lower due to strong ground coupling via vias
+            effEr = (params.substrateEr + 1) / 2 + 0.2; // Higher effective permittivity due to ground coupling
             
         } else {
             z0 = 50; // Default approximation

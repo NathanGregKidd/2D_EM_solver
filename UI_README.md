@@ -16,6 +16,8 @@ This web-based UI allows users to create and configure 2D transmission line cros
 - **Microstrip**: Single trace on substrate with ground plane below
 - **Stripline**: Trace embedded between ground planes
 - **Coplanar Waveguide**: Trace with side ground planes on same layer  
+- **Coplanar Waveguide with Ground**: Coplanar waveguide with additional ground plane below substrate
+- **Grounded Coplanar Waveguide**: Coplanar waveguide with ground plane below and vias connecting coplanar grounds to bottom ground
 - **Custom**: User-defined configuration for special cases
 
 ### Geometry Controls
@@ -25,7 +27,7 @@ This web-based UI allows users to create and configure 2D transmission line cros
 
 ### Visualization
 - **Cross-section View**: Canvas-based rendering of the transmission line geometry
-- **Color-coded Materials**: Signal conductor (orange), ground plane (brown), substrate (green), air (light gray)
+- **Color-coded Materials**: Signal conductor (orange), ground plane (brown), vias (gray), substrate (green), air (light gray)
 - **Dimensional Annotations**: Key measurements displayed on the geometry
 - **Grid Background**: Reference grid for scale
 
