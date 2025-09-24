@@ -96,11 +96,22 @@ class TestPredefinedGeometries(TestCase):
         )
         
         self.assertIsInstance(geometry, Geometry2D)
-        self.assertEqual(len(geometry.regions), 2)  # Substrate + trace
+        self.assertEqual(len(geometry.regions), 3)  # Ground plane + substrate + trace
         
-        # Check that we have conductor regions
+        # Check that we have conductor regions (ground + signal)
         conductors = geometry.get_conductor_regions()
-        self.assertEqual(len(conductors), 1)
+        self.assertEqual(len(conductors), 2)
+        
+        # Verify conductor names
+        conductor_names = [c.material.name for c in conductors]
+        self.assertIn("ground", conductor_names)
+        self.assertIn("signal", conductor_names)
+        
+        # Verify ground plane is at bottom
+        ground_conductor = next(c for c in conductors if c.material.name == "ground")
+        self.assertEqual(ground_conductor.y_min, 0.0)  # Should start at bottom
+        self.assertEqual(ground_conductor.x_min, 0.0)  # Should span full width
+        self.assertEqual(ground_conductor.x_max, geometry.width)
     
     def test_stripline_creation(self):
         """Test stripline geometry creation."""
@@ -180,17 +191,18 @@ class TestTransmissionLineCalculations(TestCase):
             substrate_width=0.002,
             substrate_height=0.001,
             trace_width=0.0005,
-            trace_thickness=0.000035,
-            substrate_er=4.6
+            trace_thickness=0.0001,  # Thicker trace for better numerical stability
+            substrate_er=4.6,
+            conductor_name="signal"  # Use explicit conductor name for clarity
         )
         
-        params = SolverParameters(nx=50, ny=50)
+        params = SolverParameters(nx=80, ny=80)  # Higher resolution for small features
         
         tl_params = calculate_transmission_line_parameters(
             geometry=geometry,
             parameters=params,
             frequency=1e9,
-            conductor_names=("copper", "ground")
+            conductor_names=("signal", "ground")  # Match actual conductor material names
         )
         
         # Check that parameters are reasonable

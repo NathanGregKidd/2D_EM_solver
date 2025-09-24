@@ -91,9 +91,16 @@ def create_microstrip_geometry(
     trace_width: float,
     trace_thickness: float,
     substrate_er: float = 4.6,
-    conductor_name: str = "copper"
+    conductor_name: str = "signal",
+    ground_thickness: float = None
 ) -> Geometry2D:
     """Create a microstrip transmission line geometry.
+    
+    A microstrip consists of:
+    - Ground plane conductor at the bottom
+    - Substrate layer above the ground plane
+    - Signal trace on top of the substrate
+    - Air region above the trace
     
     Args:
         substrate_width: Width of the substrate
@@ -101,36 +108,52 @@ def create_microstrip_geometry(
         trace_width: Width of the trace conductor
         trace_thickness: Thickness of the trace
         substrate_er: Relative permittivity of substrate
-        conductor_name: Name of conductor material
+        conductor_name: Name of signal conductor material
+        ground_thickness: Thickness of ground plane (if None, uses trace_thickness)
     
     Returns:
         Geometry2D: Configured microstrip geometry
     """
+    # Set default ground plane thickness
+    if ground_thickness is None:
+        ground_thickness = trace_thickness
+    
     # Materials
     air = Material("air", epsilon_r=1.0)
     substrate = Material("substrate", epsilon_r=substrate_er)
-    conductor = Material(conductor_name, epsilon_r=1.0, sigma=5.8e7)  # Copper
+    signal_conductor = Material(conductor_name, epsilon_r=1.0, sigma=5.8e7)  # Copper
+    ground_conductor = Material("ground", epsilon_r=1.0, sigma=5.8e7)  # Copper ground plane
     
     # Create geometry with air as default
-    total_height = substrate_height + trace_thickness + substrate_height  # Air above
+    # Layout from bottom to top: ground plane -> substrate -> trace -> air
+    total_height = ground_thickness + substrate_height + trace_thickness + substrate_height  # Air above
     geom = Geometry2D(substrate_width, total_height, air)
     
-    # Add substrate
+    # Add ground plane at the bottom (full width)
+    ground_rect = Rectangle(
+        x_min=0, x_max=substrate_width,
+        y_min=0, y_max=ground_thickness,
+        material=ground_conductor
+    )
+    geom.add_rectangle(ground_rect)
+    
+    # Add substrate above ground plane
     substrate_rect = Rectangle(
         x_min=0, x_max=substrate_width,
-        y_min=0, y_max=substrate_height,
+        y_min=ground_thickness, y_max=ground_thickness + substrate_height,
         material=substrate
     )
     geom.add_rectangle(substrate_rect)
     
-    # Add trace (centered horizontally)
+    # Add signal trace on top of substrate (centered horizontally)
     trace_x_center = substrate_width / 2
+    trace_y_bottom = ground_thickness + substrate_height
     trace_rect = Rectangle(
         x_min=trace_x_center - trace_width/2,
         x_max=trace_x_center + trace_width/2,
-        y_min=substrate_height,
-        y_max=substrate_height + trace_thickness,
-        material=conductor
+        y_min=trace_y_bottom,
+        y_max=trace_y_bottom + trace_thickness,
+        material=signal_conductor
     )
     geom.add_rectangle(trace_rect)
     
