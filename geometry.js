@@ -21,6 +21,7 @@ class TransmissionLineGeometry {
         document.getElementById('trace-width').addEventListener('input', () => this.updateGeometry());
         document.getElementById('trace-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('ground-thickness').addEventListener('input', () => this.updateGeometry());
+        document.getElementById('coplanar-gap').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-width').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-er').addEventListener('input', () => this.updateEstimatedParams());
@@ -111,7 +112,7 @@ class TransmissionLineGeometry {
         this.ctx.fillRect(0, 0, this.canvas.width, substrateY);
         
         // Draw trace based on transmission line type
-        this.drawTrace(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, params.groundThickness * this.scale);
+        this.drawTrace(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, params.groundThickness * this.scale, params.coplanarGap * this.scale);
         
         // Add dimensions annotations
         this.drawDimensions(traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, params);
@@ -120,7 +121,7 @@ class TransmissionLineGeometry {
         this.drawCoordinateSystem();
     }
     
-    drawTrace(lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, groundThickness = 0) {
+    drawTrace(lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, groundThickness = 0, coplanarGap = 20) {
         this.ctx.fillStyle = '#e67e22'; // Orange for conductor
         this.ctx.strokeStyle = '#d35400';
         this.ctx.lineWidth = 2;
@@ -157,7 +158,6 @@ class TransmissionLineGeometry {
                 
             case 'coplanar':
                 // Trace with side ground planes
-                const gapWidth = 20; // pixels
                 const groundWidth = 50; // pixels
                 
                 // Signal trace
@@ -165,17 +165,16 @@ class TransmissionLineGeometry {
                 this.ctx.strokeRect(traceX, traceY, traceWidth, traceHeight);
                 
                 // Left ground plane
-                this.ctx.fillRect(traceX - gapWidth - groundWidth, traceY, groundWidth, traceHeight);
-                this.ctx.strokeRect(traceX - gapWidth - groundWidth, traceY, groundWidth, traceHeight);
+                this.ctx.fillRect(traceX - coplanarGap - groundWidth, traceY, groundWidth, traceHeight);
+                this.ctx.strokeRect(traceX - coplanarGap - groundWidth, traceY, groundWidth, traceHeight);
                 
                 // Right ground plane
-                this.ctx.fillRect(traceX + traceWidth + gapWidth, traceY, groundWidth, traceHeight);
-                this.ctx.strokeRect(traceX + traceWidth + gapWidth, traceY, groundWidth, traceHeight);
+                this.ctx.fillRect(traceX + traceWidth + coplanarGap, traceY, groundWidth, traceHeight);
+                this.ctx.strokeRect(traceX + traceWidth + coplanarGap, traceY, groundWidth, traceHeight);
                 break;
                 
             case 'coplanar-with-ground':
                 // Coplanar waveguide with ground plane below substrate
-                const gapWidthWG = 20; // pixels
                 const groundWidthWG = 50; // pixels
                 
                 // Signal trace
@@ -183,12 +182,12 @@ class TransmissionLineGeometry {
                 this.ctx.strokeRect(traceX, traceY, traceWidth, traceHeight);
                 
                 // Left ground plane (coplanar)
-                this.ctx.fillRect(traceX - gapWidthWG - groundWidthWG, traceY, groundWidthWG, traceHeight);
-                this.ctx.strokeRect(traceX - gapWidthWG - groundWidthWG, traceY, groundWidthWG, traceHeight);
+                this.ctx.fillRect(traceX - coplanarGap - groundWidthWG, traceY, groundWidthWG, traceHeight);
+                this.ctx.strokeRect(traceX - coplanarGap - groundWidthWG, traceY, groundWidthWG, traceHeight);
                 
                 // Right ground plane (coplanar)
-                this.ctx.fillRect(traceX + traceWidth + gapWidthWG, traceY, groundWidthWG, traceHeight);
-                this.ctx.strokeRect(traceX + traceWidth + gapWidthWG, traceY, groundWidthWG, traceHeight);
+                this.ctx.fillRect(traceX + traceWidth + coplanarGap, traceY, groundWidthWG, traceHeight);
+                this.ctx.strokeRect(traceX + traceWidth + coplanarGap, traceY, groundWidthWG, traceHeight);
                 
                 // Ground plane below substrate (different color)
                 this.ctx.fillStyle = '#8b4513'; // Brown for ground plane
@@ -199,7 +198,6 @@ class TransmissionLineGeometry {
                 
             case 'grounded-coplanar':
                 // Grounded coplanar waveguide with vias connecting ground planes
-                const gapWidthGC = 20; // pixels
                 const groundWidthGC = 50; // pixels
                 
                 // Signal trace
@@ -207,12 +205,12 @@ class TransmissionLineGeometry {
                 this.ctx.strokeRect(traceX, traceY, traceWidth, traceHeight);
                 
                 // Left ground plane (coplanar)
-                this.ctx.fillRect(traceX - gapWidthGC - groundWidthGC, traceY, groundWidthGC, traceHeight);
-                this.ctx.strokeRect(traceX - gapWidthGC - groundWidthGC, traceY, groundWidthGC, traceHeight);
+                this.ctx.fillRect(traceX - coplanarGap - groundWidthGC, traceY, groundWidthGC, traceHeight);
+                this.ctx.strokeRect(traceX - coplanarGap - groundWidthGC, traceY, groundWidthGC, traceHeight);
                 
                 // Right ground plane (coplanar)
-                this.ctx.fillRect(traceX + traceWidth + gapWidthGC, traceY, groundWidthGC, traceHeight);
-                this.ctx.strokeRect(traceX + traceWidth + gapWidthGC, traceY, groundWidthGC, traceHeight);
+                this.ctx.fillRect(traceX + traceWidth + coplanarGap, traceY, groundWidthGC, traceHeight);
+                this.ctx.strokeRect(traceX + traceWidth + coplanarGap, traceY, groundWidthGC, traceHeight);
                 
                 // Ground plane below substrate (different color)
                 this.ctx.fillStyle = '#8b4513'; // Brown for ground plane
@@ -230,7 +228,7 @@ class TransmissionLineGeometry {
                 for (let y = traceY + traceHeight; y <= substrateY + substrateHeight; y += viaSpacing) {
                     if (y + viaRadius <= substrateY + substrateHeight) {
                         this.ctx.beginPath();
-                        this.ctx.arc(traceX - gapWidthGC - groundWidthGC/2, y, viaRadius, 0, 2 * Math.PI);
+                        this.ctx.arc(traceX - coplanarGap - groundWidthGC/2, y, viaRadius, 0, 2 * Math.PI);
                         this.ctx.fill();
                         this.ctx.stroke();
                     }
@@ -240,7 +238,7 @@ class TransmissionLineGeometry {
                 for (let y = traceY + traceHeight; y <= substrateY + substrateHeight; y += viaSpacing) {
                     if (y + viaRadius <= substrateY + substrateHeight) {
                         this.ctx.beginPath();
-                        this.ctx.arc(traceX + traceWidth + gapWidthGC + groundWidthGC/2, y, viaRadius, 0, 2 * Math.PI);
+                        this.ctx.arc(traceX + traceWidth + coplanarGap + groundWidthGC/2, y, viaRadius, 0, 2 * Math.PI);
                         this.ctx.fill();
                         this.ctx.stroke();
                     }
@@ -340,6 +338,7 @@ class TransmissionLineGeometry {
             traceWidth: parseFloat(document.getElementById('trace-width').value),
             traceHeight: parseFloat(document.getElementById('trace-height').value),
             groundThickness: parseFloat(document.getElementById('ground-thickness').value),
+            coplanarGap: parseFloat(document.getElementById('coplanar-gap').value),
             substrateHeight: parseFloat(document.getElementById('substrate-height').value),
             substrateWidth: parseFloat(document.getElementById('substrate-width').value),
             substrateEr: parseFloat(document.getElementById('substrate-er').value),
@@ -412,6 +411,7 @@ class TransmissionLineGeometry {
                 traceWidth_um: params.traceWidth,
                 traceHeight_um: params.traceHeight,
                 groundThickness_um: params.groundThickness,
+                coplanarGap_um: params.coplanarGap,
                 substrateWidth_um: params.substrateWidth,
                 substrateHeight_um: params.substrateHeight
             },

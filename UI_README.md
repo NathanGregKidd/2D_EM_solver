@@ -21,7 +21,7 @@ This web-based UI allows users to create and configure 2D transmission line cros
 - **Custom**: User-defined configuration for special cases
 
 ### Geometry Controls
-- **Dimensions**: Configure trace width, height, ground plane thickness, substrate dimensions (in micrometers)
+- **Dimensions**: Configure trace width, height, ground plane thickness, coplanar gap width, substrate dimensions (in micrometers)
 - **Materials**: Set substrate dielectric constant (εr), loss tangent, and conductor properties
 - **Real-time Updates**: Geometry visualization and parameter estimation update automatically
 
@@ -72,6 +72,7 @@ Exported geometry data includes:
     "traceWidth_um": number,
     "traceHeight_um": number,
     "groundThickness_um": number,
+    "coplanarGap_um": number,
     "substrateWidth_um": number,
     "substrateHeight_um": number
   },
