@@ -4,7 +4,7 @@ Always reference these instructions first and fallback to search or bash command
 
 ## Application Overview
 
-The 2D EM Solver is a web-based transmission line geometry designer built with pure HTML5, CSS, and JavaScript. It allows users to create and configure 2D transmission line cross-sectional geometries for electromagnetic simulation. The application provides real-time impedance calculations, interactive parameter control, and JSON export functionality.
+The 2D EM Solver consists of a JavaScript-based frontend UI (Geometry Designer) and a planned Python-based FEM backend. The frontend allows users to create and configure 2D transmission line cross-sectional geometries with rough transmission line parameter estimations for reference only. Once the geometry is finalized, it exports to a more rigorous Python backend based on FEM analysis that solves Maxwell's equations for accurate solutions. The current UI provides real-time impedance calculations, interactive parameter control, and JSON export functionality.
 
 ## Working Effectively
 
@@ -35,7 +35,7 @@ After making any changes, ALWAYS run through these validation scenarios:
    - Verify impedance value updates automatically (should change from ~138Ω to ~107Ω)
    - Modify trace width from 100μm to 150μm
    - Confirm the geometry redraws and impedance recalculates
-   - Test all four transmission line types: Microstrip, Stripline, Coplanar Waveguide, Custom
+   - Test all transmission line types: Microstrip, Stripline, Coplanar Waveguide, Coplanar Waveguide with Ground, Grounded Coplanar Waveguide, Differential Pair, Differential Coplanar Waveguide, Differential Coplanar Waveguide with Ground, Grounded Differential Coplanar Waveguide, Custom
 
 3. **Export Functionality Test**:
    - Click "Export Geometry" button
@@ -75,6 +75,12 @@ After making any changes, ALWAYS run through these validation scenarios:
 - **Microstrip**: Single conductor above ground plane
 - **Stripline**: Conductor between two ground planes  
 - **Coplanar Waveguide**: Signal trace with ground planes on same layer
+- **Coplanar Waveguide with Ground**: Coplanar waveguide with additional ground plane
+- **Grounded Coplanar Waveguide**: Coplanar waveguide with ground plane beneath
+- **Differential Pair**: Two signal conductors for differential signaling
+- **Differential Coplanar Waveguide**: Differential pair with coplanar ground planes
+- **Differential Coplanar Waveguide with Ground**: Differential coplanar with additional ground plane
+- **Grounded Differential Coplanar Waveguide**: Differential coplanar with ground plane beneath
 - **Custom**: Basic geometry for user customization
 
 ## Common Development Tasks
@@ -88,9 +94,9 @@ After making any changes, ALWAYS run through these validation scenarios:
 ### Adding New Features
 - Follow existing code patterns in `geometry.js`
 - Add new transmission line types by extending the `drawTrace()` method
-- Update impedance calculations in `updateEstimatedParams()` method
+- Update impedance calculations in `updateEstimatedParams()` method (these are rough estimates for reference only)
 - Test real-time updates and canvas rendering
-- Ensure export JSON format remains compatible
+- The JSON export format is still evolving and may change as the system develops
 
 ### Debugging Issues
 - Use browser developer tools (F12) to check console for JavaScript errors
@@ -101,32 +107,58 @@ After making any changes, ALWAYS run through these validation scenarios:
 ## Data Format
 
 ### JSON Export Structure
-The application exports geometry data in this format:
+The application will export geometry data with support for layers, conductors, substrates, and spacers. The planned format structure:
 ```json
 {
   "timestamp": "ISO_date_string",
   "transmissionLineType": "microstrip|stripline|coplanar|custom",
-  "dimensions": {
-    "traceWidth_um": number,
-    "traceHeight_um": number,
-    "substrateWidth_um": number,
-    "substrateHeight_um": number
-  },
-  "materials": {
-    "substrate": {
-      "relativePermittivity": number,
-      "lossTangent": number
+  "layers": [
+    {
+      "layerNumber": 1,
+      "elements": [
+        {
+          "type": "conductor",
+          "conductorType": "ground",
+          "conductorParameters": {},
+          "sizeParameters": {}
+        }
+      ]
     },
-    "conductor": {
-      "conductivity_S_per_m": number
+    {
+      "layerNumber": 2,
+      "elements": [
+        {
+          "type": "substrate",
+          "substrateType": "FR4",
+          "sizeParameters": {}
+        }
+      ]
+    },
+    {
+      "layerNumber": 3,
+      "elements": [
+        {
+          "type": "spacer",
+          "spacerType": "air",
+          "sizeParameters": {}
+        },
+        {
+          "type": "conductor",
+          "conductorType": "signal1",
+          "conductorParameters": {},
+          "sizeParameters": {}
+        },
+        {
+          "type": "spacer",
+          "spacerType": "air",
+          "sizeParameters": {}
+        }
+      ]
     }
-  },
-  "estimatedParameters": {
-    "characteristicImpedance_ohms": number,
-    "effectivePermittivity": number
-  }
+  ]
 }
 ```
+Note: Layers are interpreted from bottom to top (layer 1 is bottom, layer 3 is top). Elements within layers are interpreted from left to right.
 
 ## Timing Expectations
 
@@ -136,9 +168,10 @@ The application exports geometry data in this format:
 - **Canvas rendering**: Near-instantaneous
 - **Export operations**: < 1 second
 
-## No Build/Test Infrastructure
+## Build/Test Infrastructure
 
-This repository has:
+### Current State
+This repository currently has:
 - **No build system** (Make, npm, etc.)
 - **No test framework** (Jest, Mocha, etc.)  
 - **No linting tools** (ESLint, etc.)
@@ -147,11 +180,14 @@ This repository has:
 
 All validation must be done through manual testing in the browser.
 
+### Future State
+Once the FEM system is implemented in Python, there may or may not be a build system. The Python FEM backend will likely require its own dependencies and setup procedures.
+
 ## Future Development Notes
 
 The repository structure indicates planned components:
-- **2D EM Solver** (planned): Will process geometry data and calculate RLGC parameters
+- **2D EM Solver** (planned): Will process geometry data and calculate RLGC parameters through FEM numerical methods solving Maxwell's equations
 - **Slicer** (planned): Will extract cross-sections from KiCAD/Gerber layouts
 - Current UI serves as the foundation for defining geometries manually
 
-Always maintain compatibility with the current JSON export format to support future integration with the EM solver backend.
+The JSON export format is not yet finalized and may change as the system evolves. Backward compatibility is not currently a priority until a working system is established.
