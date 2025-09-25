@@ -62,6 +62,8 @@ The Geometry Designer UI provides the primary interface to the whole application
 * The solver uses the exported geometry to decide what is the port of interest
 * Ports may be defined as a signal source between two conductor. e.g. in microstrip it might be the single microstrip line and the ground plane. In differential pair the port could be *either* from one signal conductor to the other, or from one signal conductor to ground, or from both signal conductors to ground.
 * The solver uses python or C and can be tested from the browser. Copilot should be able to test.
+* The solver uses the helmholtz equation to solve for the transmission parameters under dynamic conditions.
+* The solver is reliable up to 100 GHz
 
 ## System Requirements
 
