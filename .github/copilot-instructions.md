@@ -2,6 +2,8 @@
 
 Always reference these instructions first and fallback to search or bash commands only when you encounter unexpected information that does not match the info here.
 
+In addition, always check the technical_requirements.md document when making preperations. 
+
 ## Application Overview
 
 The 2D EM Solver consists of a JavaScript-based frontend UI (Geometry Designer) and a planned Python-based FEM backend. The frontend allows users to create and configure 2D transmission line cross-sectional geometries with rough transmission line parameter estimations for reference only. Once the geometry is finalized, it exports to a more rigorous Python backend based on FEM analysis that solves Maxwell's equations for accurate solutions. The current UI provides real-time impedance calculations, interactive parameter control, and JSON export functionality.
