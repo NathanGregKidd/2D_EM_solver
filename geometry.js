@@ -40,6 +40,7 @@ class TransmissionLineGeometry {
         document.getElementById('coplanar-gap').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-width').addEventListener('input', () => this.updateGeometry());
+        document.getElementById('air-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-er').addEventListener('input', () => this.updateEstimatedParams());
         document.getElementById('substrate-loss').addEventListener('input', () => this.updateEstimatedParams());
         document.getElementById('conductor-sigma').addEventListener('input', () => this.updateEstimatedParams());
@@ -236,6 +237,7 @@ class TransmissionLineGeometry {
         const traceHeight = params.traceHeight * this.scale;
         const substrateWidth = params.substrateWidth * this.scale;
         const substrateHeight = params.substrateHeight * this.scale;
+        const airHeight = params.airHeight * this.scale;
         
         // Calculate positions
         const canvasCenterX = this.canvas.width / 2;
@@ -244,6 +246,27 @@ class TransmissionLineGeometry {
         const traceX = canvasCenterX - traceWidth / 2;
         const traceY = substrateY - traceHeight;
         
+        // Calculate the top of the geometry based on transmission line type
+        let geometryTopY;
+        switch (params.lineType) {
+            case 'stripline':
+                // Top ground plane is above substrate
+                geometryTopY = substrateY - 20;
+                break;
+            case 'microstrip':
+            case 'coplanar':
+            case 'coplanar-with-ground':
+            case 'grounded-coplanar':
+            case 'custom':
+            default:
+                // Trace is on top of substrate
+                geometryTopY = traceY;
+                break;
+        }
+        
+        // Calculate air box position (sits on top of the geometry)
+        const airBoxY = geometryTopY - airHeight;
+        
         // Draw substrate
         this.ctx.fillStyle = '#27ae60'; // Green for substrate
         this.ctx.fillRect(substrateX, substrateY, substrateWidth, substrateHeight);
@@ -251,9 +274,12 @@ class TransmissionLineGeometry {
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(substrateX, substrateY, substrateWidth, substrateHeight);
         
-        // Draw air/vacuum regions
+        // Draw air/vacuum region (sits on top of geometry with fixed height)
         this.ctx.fillStyle = '#ecf0f1'; // Light gray for air
-        this.ctx.fillRect(0, 0, this.canvas.width, substrateY);
+        this.ctx.fillRect(substrateX, airBoxY, substrateWidth, airHeight);
+        this.ctx.strokeStyle = '#bdc3c7';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(substrateX, airBoxY, substrateWidth, airHeight);
         
         // Draw trace based on transmission line type
         this.drawTrace(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, params.groundThickness * this.scale, params.coplanarGap * this.scale);
@@ -488,6 +514,7 @@ class TransmissionLineGeometry {
             coplanarGap: parseFloat(document.getElementById('coplanar-gap').value),
             substrateHeight: parseFloat(document.getElementById('substrate-height').value),
             substrateWidth: parseFloat(document.getElementById('substrate-width').value),
+            airHeight: parseFloat(document.getElementById('air-height').value),
             substrateEr: parseFloat(document.getElementById('substrate-er').value),
             substrateLoss: parseFloat(document.getElementById('substrate-loss').value),
             conductorSigma: parseFloat(document.getElementById('conductor-sigma').value)
