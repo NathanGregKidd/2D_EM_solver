@@ -351,7 +351,8 @@ class TransmissionLineGeometry {
                 traceWidth_um: params.traceWidth,
                 traceHeight_um: params.traceHeight,
                 substrateWidth_um: params.substrateWidth,
-                substrateHeight_um: params.substrateHeight
+                substrateHeight_um: params.substrateHeight,
+                airHeight_um: params.airHeight
             },
             materials: {
                 substrate: {
