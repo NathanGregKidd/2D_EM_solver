@@ -7,7 +7,7 @@ class TransmissionLineGeometry {
     constructor() {
         this.canvas = document.getElementById('geometry-canvas');
         this.ctx = this.canvas.getContext('2d');
-        this.scale = 0.5; // pixels per micrometer
+        this.scale = 0.1; // pixels per micrometer
         this.offsetX = 50;
         this.offsetY = 50;
         
