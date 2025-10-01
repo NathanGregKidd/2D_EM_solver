@@ -7,12 +7,6 @@ This web-based UI allows users to create and configure 2D transmission line cros
 ## Features
 
 ### Supported Transmission Line Types
-- **Microstrip**: Single conductor trace above a ground plane with substrate
-- **Stripline**: Conductor embedded between two ground planes in substrate
-- **Coplanar Waveguide**: Signal trace with ground planes on the same layer
-- **Custom**: Basic geometry for user customization
-
-### Supported Transmission Line Types
 - **Microstrip**: Single trace on substrate with ground plane below
 - **Stripline**: Trace embedded between ground planes
 - **Coplanar Waveguide**: Trace with side ground planes on same layer  

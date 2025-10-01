@@ -4,9 +4,9 @@ A Python-based 2D electromagnetic field solver for transmission line analysis. T
 
 ## Features
 
-- **2D Field Solver**: Finite difference method for solving Laplace's equation with dielectric materials
+- **2D Field Solver**: Finite element method for solving Laplace's, Poisson's, and Helmholtz' equation with dielectric materials
 - **Transmission Line Analysis**: Calculate RLGC parameters and characteristic impedance
-- **Predefined Geometries**: Built-in support for microstrip and stripline configurations
+- **Predefined Geometries**: Built-in support for microstrip, stripline, coplanar waveguide configurations
 - **Field Visualization**: Plot electric potential and field distributions
 - **Analytical Validation**: Compare results with analytical formulas
 - **Command Line Interface**: Easy-to-use CLI for common analyses
