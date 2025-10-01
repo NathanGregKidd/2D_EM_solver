@@ -11,8 +11,16 @@ A Python-based 2D electromagnetic field solver for transmission line analysis. T
 - **Analytical Validation**: Compare results with analytical formulas
 - **Command Line Interface**: Easy-to-use CLI for common analyses
 - **Frequency Analysis**: Frequency sweep capabilities
+- **Multiple transmission line types**: Microstrip, Stripline, Coplanar Waveguide, and Custom
+- **Interactive parameter control**: Real-time geometry updates and impedance calculations
+- **Zoom and pan controls**: Mouse wheel zoom, click-drag pan, and zoom buttons for exploring geometries at any scale
+- **Material property configuration**: Substrate permittivity, loss tangent, conductor properties
+- **Visual geometry rendering**: Canvas-based cross-sectional view with dimensional annotations
+- **Data export**: JSON export functionality for geometry and material data
+- **Parameter estimation**: Automatic calculation of characteristic impedance and effective permittivity
 
 ## Installation
+
 
 ### Prerequisites
 - Python 3.8 or higher

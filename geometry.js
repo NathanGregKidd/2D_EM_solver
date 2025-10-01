@@ -11,7 +11,23 @@ class TransmissionLineGeometry {
         this.offsetX = 50;
         this.offsetY = 50;
         
+        // Zoom and pan state
+        this.zoomLevel = 1.0;
+        this.panX = 0;
+        this.panY = 0;
+        this.minZoom = 0.1;
+        this.maxZoom = 10;
+        
+        // Pan interaction state
+        this.isPanning = false;
+        this.lastMouseX = 0;
+        this.lastMouseY = 0;
+        
+        // Set initial canvas cursor
+        this.canvas.style.cursor = 'grab';
+        
         this.initializeEventListeners();
+        this.updateZoomDisplay();
         this.drawGeometry();
     }
     
@@ -33,6 +49,18 @@ class TransmissionLineGeometry {
         document.getElementById('export-btn').addEventListener('click', () => this.showExportModal());
         document.getElementById('clear-btn').addEventListener('click', () => this.clearCanvas());
         
+        // Zoom controls
+        document.getElementById('zoom-in-btn').addEventListener('click', () => this.zoomIn());
+        document.getElementById('zoom-out-btn').addEventListener('click', () => this.zoomOut());
+        document.getElementById('zoom-reset-btn').addEventListener('click', () => this.resetZoom());
+        
+        // Canvas zoom and pan interactions
+        this.canvas.addEventListener('wheel', (e) => this.handleWheel(e));
+        this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        this.canvas.addEventListener('mouseup', () => this.handleMouseUp());
+        this.canvas.addEventListener('mouseleave', () => this.handleMouseUp());
+        
         // Modal controls
         document.getElementById('copy-data-btn').addEventListener('click', () => this.copyExportData());
         document.getElementById('download-data-btn').addEventListener('click', () => this.downloadExportData());
@@ -46,43 +74,159 @@ class TransmissionLineGeometry {
         });
     }
     
+    // Zoom and pan methods
+    handleWheel(e) {
+        e.preventDefault();
+        
+        // Get mouse position relative to canvas
+        const rect = this.canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        // Calculate zoom factor
+        const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+        const newZoom = Math.max(this.minZoom, Math.min(this.maxZoom, this.zoomLevel * zoomFactor));
+        
+        // Adjust pan to zoom towards mouse position
+        const zoomRatio = newZoom / this.zoomLevel;
+        this.panX = mouseX - (mouseX - this.panX) * zoomRatio;
+        this.panY = mouseY - (mouseY - this.panY) * zoomRatio;
+        
+        this.zoomLevel = newZoom;
+        this.updateZoomDisplay();
+        this.drawGeometry();
+    }
+    
+    handleMouseDown(e) {
+        this.isPanning = true;
+        this.lastMouseX = e.clientX;
+        this.lastMouseY = e.clientY;
+        this.canvas.style.cursor = 'grabbing';
+    }
+    
+    handleMouseMove(e) {
+        if (this.isPanning) {
+            const deltaX = e.clientX - this.lastMouseX;
+            const deltaY = e.clientY - this.lastMouseY;
+            
+            this.panX += deltaX;
+            this.panY += deltaY;
+            
+            this.lastMouseX = e.clientX;
+            this.lastMouseY = e.clientY;
+            
+            this.drawGeometry();
+        }
+    }
+    
+    handleMouseUp() {
+        this.isPanning = false;
+        this.canvas.style.cursor = 'grab';
+    }
+    
+    zoomIn() {
+        const newZoom = Math.min(this.maxZoom, this.zoomLevel * 1.2);
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        
+        const zoomRatio = newZoom / this.zoomLevel;
+        this.panX = centerX - (centerX - this.panX) * zoomRatio;
+        this.panY = centerY - (centerY - this.panY) * zoomRatio;
+        
+        this.zoomLevel = newZoom;
+        this.updateZoomDisplay();
+        this.drawGeometry();
+    }
+    
+    zoomOut() {
+        const newZoom = Math.max(this.minZoom, this.zoomLevel / 1.2);
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        
+        const zoomRatio = newZoom / this.zoomLevel;
+        this.panX = centerX - (centerX - this.panX) * zoomRatio;
+        this.panY = centerY - (centerY - this.panY) * zoomRatio;
+        
+        this.zoomLevel = newZoom;
+        this.updateZoomDisplay();
+        this.drawGeometry();
+    }
+    
+    resetZoom() {
+        this.zoomLevel = 1.0;
+        this.panX = 0;
+        this.panY = 0;
+        this.updateZoomDisplay();
+        this.drawGeometry();
+    }
+    
+    updateZoomDisplay() {
+        const zoomPercent = Math.round(this.zoomLevel * 100);
+        document.getElementById('zoom-level').textContent = `${zoomPercent}%`;
+    }
+    
     updateGeometry() {
         this.drawGeometry();
         this.updateEstimatedParams();
     }
     
     clearCanvas() {
+        // Clear the entire canvas without transformations
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.restore();
+        
+        // Draw grid with transformations
         this.drawGrid();
     }
     
     drawGrid() {
+        this.ctx.save();
+        this.ctx.translate(this.panX, this.panY);
+        this.ctx.scale(this.zoomLevel, this.zoomLevel);
+        
         const ctx = this.ctx;
         const gridSize = 50; // pixels
         
         ctx.strokeStyle = '#f0f0f0';
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1 / this.zoomLevel; // Adjust line width for zoom
+        
+        // Calculate visible grid range
+        const startX = Math.floor(-this.panX / this.zoomLevel / gridSize) * gridSize;
+        const endX = Math.ceil((this.canvas.width - this.panX) / this.zoomLevel / gridSize) * gridSize;
+        const startY = Math.floor(-this.panY / this.zoomLevel / gridSize) * gridSize;
+        const endY = Math.ceil((this.canvas.height - this.panY) / this.zoomLevel / gridSize) * gridSize;
         
         // Vertical lines
-        for (let x = 0; x <= this.canvas.width; x += gridSize) {
+        for (let x = startX; x <= endX; x += gridSize) {
             ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, this.canvas.height);
+            ctx.moveTo(x, startY);
+            ctx.lineTo(x, endY);
             ctx.stroke();
         }
         
         // Horizontal lines
-        for (let y = 0; y <= this.canvas.height; y += gridSize) {
+        for (let y = startY; y <= endY; y += gridSize) {
             ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(this.canvas.width, y);
+            ctx.moveTo(startX, y);
+            ctx.lineTo(endX, y);
             ctx.stroke();
         }
+        
+        this.ctx.restore();
     }
     
     drawGeometry() {
         // Clear canvas
         this.clearCanvas();
+        
+        // Save context state
+        this.ctx.save();
+        
+        // Apply zoom and pan transformations
+        this.ctx.translate(this.panX, this.panY);
+        this.ctx.scale(this.zoomLevel, this.zoomLevel);
         
         // Get current parameters
         const params = this.getGeometryParams();
@@ -119,6 +263,9 @@ class TransmissionLineGeometry {
         
         // Add coordinate system
         this.drawCoordinateSystem();
+        
+        // Restore context state
+        this.ctx.restore();
     }
     
     drawTrace(lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, groundThickness = 0, coplanarGap = 20) {

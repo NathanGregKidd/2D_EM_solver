@@ -30,6 +30,12 @@ This web-based UI allows users to create and configure 2D transmission line cros
 - **Color-coded Materials**: Signal conductor (orange), ground plane (brown), vias (gray), substrate (green), air (light gray)
 - **Dimensional Annotations**: Key measurements displayed on the geometry
 - **Grid Background**: Reference grid for scale
+- **Zoom and Pan**: Interactive controls for viewing geometry at any scale
+  - **Mouse Wheel Zoom**: Scroll to zoom in/out (zooms towards cursor position)
+  - **Click and Drag**: Pan the view by clicking and dragging on the canvas
+  - **Zoom Buttons**: +/− buttons for precise zoom control (10% to 1000% range)
+  - **Reset View**: ⟲ button to return to default view
+  - **Zoom Display**: Current zoom level shown as percentage
 
 ### Parameter Estimation
 - **Characteristic Impedance (Z₀)**: Approximate values using standard formulas
@@ -47,8 +53,9 @@ This web-based UI allows users to create and configure 2D transmission line cros
 2. **Set Dimensions**: Enter trace width, height, and substrate dimensions in micrometers
 3. **Configure Materials**: Set dielectric constant, loss tangent, and conductivity
 4. **View Geometry**: The canvas automatically displays the cross-sectional view
-5. **Check Parameters**: Review estimated impedance and effective permittivity
-6. **Export Data**: Use the export button to save or copy the geometry data
+5. **Zoom and Pan**: Use mouse wheel to zoom, or click zoom buttons; click and drag to pan
+6. **Check Parameters**: Review estimated impedance and effective permittivity
+7. **Export Data**: Use the export button to save or copy the geometry data
 
 ## Technical Details
 
