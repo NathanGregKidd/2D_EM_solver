@@ -193,3 +193,9 @@ The repository structure indicates planned components:
 - Current UI serves as the foundation for defining geometries manually
 
 The JSON export format is not yet finalized and may change as the system evolves. Backward compatibility is not currently a priority until a working system is established.
+
+# GitHub Copilot Instructions
+
+- Always use the `Dev` branch as the base for all pull requests, unless explicitly instructed otherwise.
+- Reference files, code, and context from the `Dev` branch when generating code, documentation, or answering questions.
+- Avoid using the `main` branch for PRs or code references unless specifically requested.
