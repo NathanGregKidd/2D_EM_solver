@@ -277,6 +277,14 @@ header p {
     background-color: #e67e22;
 }
 
+.legend-color.ground {
+    background-color: #8b4513;
+}
+
+.legend-color.via {
+    background-color: #666666;
+}
+
 .legend-color.substrate {
     background-color: #27ae60;
 }
