@@ -11,6 +11,7 @@ A web-based UI that allows users to create and configure 2D transmission line cr
 
 - **Multiple transmission line types**: Microstrip, Stripline, Coplanar Waveguide, and Custom
 - **Interactive parameter control**: Real-time geometry updates and impedance calculations
+- **Zoom and pan controls**: Mouse wheel zoom, click-drag pan, and zoom buttons for exploring geometries at any scale
 - **Material property configuration**: Substrate permittivity, loss tangent, conductor properties
 - **Visual geometry rendering**: Canvas-based cross-sectional view with dimensional annotations
 - **Data export**: JSON export functionality for geometry and material data
