@@ -22,6 +22,7 @@ class TransmissionLineGeometry {
         document.getElementById('trace-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-width').addEventListener('input', () => this.updateGeometry());
+        document.getElementById('air-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-er').addEventListener('input', () => this.updateEstimatedParams());
         document.getElementById('substrate-loss').addEventListener('input', () => this.updateEstimatedParams());
         document.getElementById('conductor-sigma').addEventListener('input', () => this.updateEstimatedParams());
@@ -85,18 +86,49 @@ class TransmissionLineGeometry {
         // Get current parameters
         const params = this.getGeometryParams();
         
-        // Convert dimensions to pixels
-        const traceWidth = params.traceWidth * this.scale;
-        const traceHeight = params.traceHeight * this.scale;
-        const substrateWidth = params.substrateWidth * this.scale;
-        const substrateHeight = params.substrateHeight * this.scale;
+        // Convert dimensions to pixels with base scale
+        let scale = this.scale;
+        const traceWidthBase = params.traceWidth * scale;
+        const traceHeightBase = params.traceHeight * scale;
+        const substrateWidthBase = params.substrateWidth * scale;
+        const substrateHeightBase = params.substrateHeight * scale;
+        const airHeightBase = params.airHeight * scale;
         
-        // Calculate positions
+        // Calculate total geometry height and width
+        const totalGeometryHeight = substrateHeightBase + traceHeightBase + airHeightBase;
+        const totalGeometryWidth = substrateWidthBase;
+        
+        // Calculate available space (with margins)
+        const availableHeight = this.canvas.height - 2 * this.offsetY;
+        const availableWidth = this.canvas.width - 2 * this.offsetX;
+        
+        // Adjust scale if geometry is too large to fit
+        const scaleFactorHeight = totalGeometryHeight > availableHeight ? availableHeight / totalGeometryHeight : 1;
+        const scaleFactorWidth = totalGeometryWidth > availableWidth ? availableWidth / totalGeometryWidth : 1;
+        const scaleFactor = Math.min(scaleFactorHeight, scaleFactorWidth);
+        
+        // Apply scaling
+        const traceWidth = traceWidthBase * scaleFactor;
+        const traceHeight = traceHeightBase * scaleFactor;
+        const substrateWidth = substrateWidthBase * scaleFactor;
+        const substrateHeight = substrateHeightBase * scaleFactor;
+        const airHeight = airHeightBase * scaleFactor;
+        
+        // Calculate positions - center horizontally, position from bottom with offset
         const canvasCenterX = this.canvas.width / 2;
-        const substrateY = this.canvas.height - this.offsetY - substrateHeight;
+        const geometryBottom = this.canvas.height - this.offsetY;
+        
+        // Position substrate at the bottom
+        const substrateY = geometryBottom - substrateHeight;
         const substrateX = canvasCenterX - substrateWidth / 2;
+        
+        // Position trace on top of substrate
         const traceX = canvasCenterX - traceWidth / 2;
         const traceY = substrateY - traceHeight;
+        
+        // Position air box on top of trace
+        const airY = traceY - airHeight;
+        const airX = substrateX;
         
         // Draw substrate
         this.ctx.fillStyle = '#27ae60'; // Green for substrate
@@ -105,12 +137,15 @@ class TransmissionLineGeometry {
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(substrateX, substrateY, substrateWidth, substrateHeight);
         
-        // Draw air/vacuum regions
-        this.ctx.fillStyle = '#ecf0f1'; // Light gray for air
-        this.ctx.fillRect(0, 0, this.canvas.width, substrateY);
-        
-        // Draw trace based on transmission line type
+        // Draw trace based on transmission line type (this may modify trace position for some types)
         this.drawTrace(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight);
+        
+        // Draw air/vacuum box on top of geometry with same width as substrate
+        this.ctx.fillStyle = '#ecf0f1'; // Light gray for air
+        this.ctx.fillRect(airX, airY, substrateWidth, airHeight);
+        this.ctx.strokeStyle = '#bdc3c7';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(airX, airY, substrateWidth, airHeight);
         
         // Add dimensions annotations
         this.drawDimensions(traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, params);
@@ -260,6 +295,7 @@ class TransmissionLineGeometry {
             traceHeight: parseFloat(document.getElementById('trace-height').value),
             substrateHeight: parseFloat(document.getElementById('substrate-height').value),
             substrateWidth: parseFloat(document.getElementById('substrate-width').value),
+            airHeight: parseFloat(document.getElementById('air-height').value),
             substrateEr: parseFloat(document.getElementById('substrate-er').value),
             substrateLoss: parseFloat(document.getElementById('substrate-loss').value),
             conductorSigma: parseFloat(document.getElementById('conductor-sigma').value)
