@@ -22,6 +22,7 @@ class TransmissionLineGeometry {
         document.getElementById('trace-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-width').addEventListener('input', () => this.updateGeometry());
+        document.getElementById('air-box-height').addEventListener('input', () => this.updateGeometry());
         document.getElementById('substrate-er').addEventListener('input', () => this.updateEstimatedParams());
         document.getElementById('substrate-loss').addEventListener('input', () => this.updateEstimatedParams());
         document.getElementById('conductor-sigma').addEventListener('input', () => this.updateEstimatedParams());
@@ -90,13 +91,41 @@ class TransmissionLineGeometry {
         const traceHeight = params.traceHeight * this.scale;
         const substrateWidth = params.substrateWidth * this.scale;
         const substrateHeight = params.substrateHeight * this.scale;
+        const airBoxHeight = params.airBoxHeight * this.scale;
         
-        // Calculate positions
+        // Calculate total height of the complete geometry stack
+        const totalHeight = airBoxHeight + traceHeight + substrateHeight;
+        
+        // Calculate positions to fit everything on canvas
         const canvasCenterX = this.canvas.width / 2;
-        const substrateY = this.canvas.height - this.offsetY - substrateHeight;
+        const availableHeight = this.canvas.height - 2 * this.offsetY;
+        
+        // Position the substrate at the bottom, but ensure air box is visible
+        // If the geometry is too tall, we'll let the bottom be cut off but keep air box visible
+        let bottomY = this.canvas.height - this.offsetY;
+        
+        // Calculate starting Y position from the top to ensure air box is visible
+        let airBoxY = this.offsetY;
+        
+        // If geometry fits on canvas, position it from bottom
+        if (totalHeight <= availableHeight) {
+            bottomY = this.canvas.height - this.offsetY;
+            const substrateY = bottomY - substrateHeight;
+            const traceY = substrateY - traceHeight;
+            airBoxY = traceY - airBoxHeight;
+        } else {
+            // Geometry is too tall, keep air box at top and let bottom extend beyond visible area
+            airBoxY = this.offsetY;
+        }
+        
+        // Calculate positions for each layer from top down
+        const traceY = airBoxY + airBoxHeight;
+        const substrateY = traceY + traceHeight;
+        
         const substrateX = canvasCenterX - substrateWidth / 2;
         const traceX = canvasCenterX - traceWidth / 2;
-        const traceY = substrateY - traceHeight;
+        const airBoxX = substrateX;
+        const airBoxWidth = substrateWidth;
         
         // Draw substrate
         this.ctx.fillStyle = '#27ae60'; // Green for substrate
@@ -105,9 +134,12 @@ class TransmissionLineGeometry {
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(substrateX, substrateY, substrateWidth, substrateHeight);
         
-        // Draw air/vacuum regions
+        // Draw air/vacuum box - positioned on top of trace with fixed height
         this.ctx.fillStyle = '#ecf0f1'; // Light gray for air
-        this.ctx.fillRect(0, 0, this.canvas.width, substrateY);
+        this.ctx.fillRect(airBoxX, airBoxY, airBoxWidth, airBoxHeight);
+        this.ctx.strokeStyle = '#bdc3c7';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(airBoxX, airBoxY, airBoxWidth, airBoxHeight);
         
         // Draw trace based on transmission line type
         this.drawTrace(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight);
@@ -260,6 +292,7 @@ class TransmissionLineGeometry {
             traceHeight: parseFloat(document.getElementById('trace-height').value),
             substrateHeight: parseFloat(document.getElementById('substrate-height').value),
             substrateWidth: parseFloat(document.getElementById('substrate-width').value),
+            airBoxHeight: parseFloat(document.getElementById('air-box-height').value),
             substrateEr: parseFloat(document.getElementById('substrate-er').value),
             substrateLoss: parseFloat(document.getElementById('substrate-loss').value),
             conductorSigma: parseFloat(document.getElementById('conductor-sigma').value)
