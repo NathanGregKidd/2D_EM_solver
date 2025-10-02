@@ -105,12 +105,11 @@ class TransmissionLineGeometry {
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(substrateX, substrateY, substrateWidth, substrateHeight);
         
-        // Draw air/vacuum regions
-        this.ctx.fillStyle = '#ecf0f1'; // Light gray for air
-        this.ctx.fillRect(0, 0, this.canvas.width, substrateY);
-        
         // Draw trace based on transmission line type
         this.drawTrace(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight);
+        
+        // Draw air/vacuum regions (after traces so it wraps around them)
+        this.drawAirRegions(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight);
         
         // Add dimensions annotations
         this.drawDimensions(traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, params);
@@ -170,6 +169,61 @@ class TransmissionLineGeometry {
                 // Basic trace for custom (user can extend this)
                 this.ctx.fillRect(traceX, traceY, traceWidth, traceHeight);
                 this.ctx.strokeRect(traceX, traceY, traceWidth, traceHeight);
+                break;
+        }
+    }
+    
+    drawAirRegions(lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight) {
+        this.ctx.fillStyle = '#ecf0f1'; // Light gray for air
+        
+        switch (lineType) {
+            case 'microstrip':
+                // Fill air above substrate and around the trace
+                // Left side of trace
+                this.ctx.fillRect(0, 0, traceX, substrateY);
+                // Right side of trace
+                this.ctx.fillRect(traceX + traceWidth, 0, this.canvas.width - (traceX + traceWidth), substrateY);
+                // Above trace
+                this.ctx.fillRect(traceX, 0, traceWidth, traceY);
+                break;
+                
+            case 'stripline':
+                // Stripline has top ground plane, so air is above it
+                const topGroundY = substrateY - 20;
+                this.ctx.fillRect(0, 0, this.canvas.width, topGroundY);
+                break;
+                
+            case 'coplanar':
+                // Trace with side ground planes - fill gaps and areas outside ground planes
+                const gapWidth = 20; // pixels
+                const groundWidth = 50; // pixels
+                const leftGroundX = traceX - gapWidth - groundWidth;
+                const rightGroundX = traceX + traceWidth + gapWidth + groundWidth;
+                
+                // Left of left ground plane
+                this.ctx.fillRect(0, 0, leftGroundX, substrateY);
+                // Right of right ground plane
+                this.ctx.fillRect(rightGroundX, 0, this.canvas.width - rightGroundX, substrateY);
+                // Gap between left ground and trace
+                this.ctx.fillRect(traceX - gapWidth, 0, gapWidth, substrateY);
+                // Gap between trace and right ground
+                this.ctx.fillRect(traceX + traceWidth, 0, gapWidth, substrateY);
+                // Above left ground plane
+                this.ctx.fillRect(leftGroundX, 0, groundWidth, traceY);
+                // Above trace
+                this.ctx.fillRect(traceX, 0, traceWidth, traceY);
+                // Above right ground plane
+                this.ctx.fillRect(traceX + traceWidth + gapWidth, 0, groundWidth, traceY);
+                break;
+                
+            case 'custom':
+                // Custom - similar to microstrip, wrap around the trace
+                // Left side of trace
+                this.ctx.fillRect(0, 0, traceX, substrateY);
+                // Right side of trace
+                this.ctx.fillRect(traceX + traceWidth, 0, this.canvas.width - (traceX + traceWidth), substrateY);
+                // Above trace
+                this.ctx.fillRect(traceX, 0, traceWidth, traceY);
                 break;
         }
     }
