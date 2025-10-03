@@ -274,12 +274,8 @@ class TransmissionLineGeometry {
         this.ctx.lineWidth = 2;
         this.ctx.strokeRect(substrateX, substrateY, substrateWidth, substrateHeight);
         
-        // Draw air/vacuum region (sits on top of geometry with fixed height)
-        this.ctx.fillStyle = '#ecf0f1'; // Light gray for air
-        this.ctx.fillRect(substrateX, airBoxY, substrateWidth, airHeight);
-        this.ctx.strokeStyle = '#bdc3c7';
-        this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(substrateX, airBoxY, substrateWidth, airHeight);
+        // Draw air/vacuum region that wraps around top-layer elements
+        this.drawAirRegion(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, airBoxY, airHeight, params.coplanarGap * this.scale);
         
         // Draw trace based on transmission line type
         this.drawTrace(params.lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, params.groundThickness * this.scale, params.coplanarGap * this.scale);
@@ -292,6 +288,88 @@ class TransmissionLineGeometry {
         
         // Restore context state
         this.ctx.restore();
+    }
+    
+    drawAirRegion(lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, airBoxY, airHeight, coplanarGap = 20) {
+        this.ctx.fillStyle = '#ecf0f1'; // Light gray for air
+        this.ctx.strokeStyle = '#bdc3c7';
+        this.ctx.lineWidth = 1;
+        
+        const groundWidth = 50; // pixels (matches trace drawing)
+        
+        switch (lineType) {
+            case 'microstrip':
+                // Air wraps around the trace - fills left, top, and right regions
+                // Left air region (from substrate edge to trace)
+                this.ctx.fillRect(substrateX, airBoxY, traceX - substrateX, airHeight+traceHeight);
+                this.ctx.strokeRect(substrateX, airBoxY, traceX - substrateX, airHeight+traceHeight);
+                
+                // Top air region (above the trace)
+                this.ctx.fillRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
+                this.ctx.strokeRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
+                
+                // Right air region (from trace to substrate edge)
+                this.ctx.fillRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight+traceHeight);
+                this.ctx.strokeRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight+traceHeight);
+                break;
+                
+            case 'stripline':
+                // For stripline, there's no exposed air on top since it's enclosed by ground planes
+                // The top ground plane covers everything
+                // No air region to draw
+                break;
+                
+            case 'coplanar':
+            case 'coplanar-with-ground':
+            case 'grounded-coplanar':
+                // Air wraps around coplanar structure - fills between and around ground planes
+                const leftGroundX = traceX - coplanarGap - groundWidth;
+                const rightGroundX = traceX + traceWidth + coplanarGap;
+                
+                // Left air region (from substrate edge to left ground)
+                this.ctx.fillRect(substrateX, airBoxY, leftGroundX - substrateX, airHeight+traceHeight);
+                this.ctx.strokeRect(substrateX, airBoxY, leftGroundX - substrateX, airHeight+traceHeight);
+
+                // Gap between left ground and trace
+                this.ctx.fillRect(leftGroundX + groundWidth, airBoxY, coplanarGap, airHeight+traceHeight);
+                this.ctx.strokeRect(leftGroundX + groundWidth, airBoxY, coplanarGap, airHeight+traceHeight);
+                
+                // Above trace
+                this.ctx.fillRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
+                this.ctx.strokeRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
+                
+                // Above left ground
+                this.ctx.fillRect(leftGroundX, airBoxY, groundWidth, traceY - airBoxY);
+                this.ctx.strokeRect(leftGroundX, airBoxY, groundWidth, traceY - airBoxY);
+                
+                // Above right ground  
+                this.ctx.fillRect(rightGroundX, airBoxY, groundWidth, traceY - airBoxY);
+                this.ctx.strokeRect(rightGroundX, airBoxY, groundWidth, traceY - airBoxY);
+                
+                // Gap between trace and right ground
+                this.ctx.fillRect(traceX + traceWidth, airBoxY, coplanarGap, airHeight+traceHeight);
+                this.ctx.strokeRect(traceX + traceWidth, airBoxY, coplanarGap, airHeight+traceHeight);
+
+                // Right air region (from right ground to substrate edge)
+                this.ctx.fillRect(rightGroundX + groundWidth, airBoxY, (substrateX + substrateWidth) - (rightGroundX + groundWidth), airHeight+traceHeight);
+                this.ctx.strokeRect(rightGroundX + groundWidth, airBoxY, (substrateX + substrateWidth) - (rightGroundX + groundWidth), airHeight+traceHeight);
+                break;
+                
+            case 'custom':
+                // For custom, wrap around the trace similar to microstrip
+                // Left air region
+                this.ctx.fillRect(substrateX, airBoxY, traceX - substrateX, airHeight);
+                this.ctx.strokeRect(substrateX, airBoxY, traceX - substrateX, airHeight);
+                
+                // Top air region
+                this.ctx.fillRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
+                this.ctx.strokeRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
+                
+                // Right air region
+                this.ctx.fillRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight);
+                this.ctx.strokeRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight);
+                break;
+        }
     }
     
     drawTrace(lineType, traceX, traceY, traceWidth, traceHeight, substrateX, substrateY, substrateWidth, substrateHeight, groundThickness = 0, coplanarGap = 20) {
