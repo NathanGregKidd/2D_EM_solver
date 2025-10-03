@@ -301,16 +301,16 @@ class TransmissionLineGeometry {
             case 'microstrip':
                 // Air wraps around the trace - fills left, top, and right regions
                 // Left air region (from substrate edge to trace)
-                this.ctx.fillRect(substrateX, airBoxY, traceX - substrateX, airHeight);
-                this.ctx.strokeRect(substrateX, airBoxY, traceX - substrateX, airHeight);
+                this.ctx.fillRect(substrateX, airBoxY, traceX - substrateX, airHeight+traceHeight);
+                this.ctx.strokeRect(substrateX, airBoxY, traceX - substrateX, airHeight+traceHeight);
                 
                 // Top air region (above the trace)
                 this.ctx.fillRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
                 this.ctx.strokeRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
                 
                 // Right air region (from trace to substrate edge)
-                this.ctx.fillRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight);
-                this.ctx.strokeRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight);
+                this.ctx.fillRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight+traceHeight);
+                this.ctx.strokeRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight+traceHeight);
                 break;
                 
             case 'stripline':
@@ -327,12 +327,12 @@ class TransmissionLineGeometry {
                 const rightGroundX = traceX + traceWidth + coplanarGap;
                 
                 // Left air region (from substrate edge to left ground)
-                this.ctx.fillRect(substrateX, airBoxY, leftGroundX - substrateX, airHeight);
-                this.ctx.strokeRect(substrateX, airBoxY, leftGroundX - substrateX, airHeight);
-                
+                this.ctx.fillRect(substrateX, airBoxY, leftGroundX - substrateX, airHeight+traceHeight);
+                this.ctx.strokeRect(substrateX, airBoxY, leftGroundX - substrateX, airHeight+traceHeight);
+
                 // Gap between left ground and trace
-                this.ctx.fillRect(leftGroundX + groundWidth, airBoxY, coplanarGap, airHeight);
-                this.ctx.strokeRect(leftGroundX + groundWidth, airBoxY, coplanarGap, airHeight);
+                this.ctx.fillRect(leftGroundX + groundWidth, airBoxY, coplanarGap, airHeight+traceHeight);
+                this.ctx.strokeRect(leftGroundX + groundWidth, airBoxY, coplanarGap, airHeight+traceHeight);
                 
                 // Above trace
                 this.ctx.fillRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
@@ -347,12 +347,12 @@ class TransmissionLineGeometry {
                 this.ctx.strokeRect(rightGroundX, airBoxY, groundWidth, traceY - airBoxY);
                 
                 // Gap between trace and right ground
-                this.ctx.fillRect(traceX + traceWidth, airBoxY, coplanarGap, airHeight);
-                this.ctx.strokeRect(traceX + traceWidth, airBoxY, coplanarGap, airHeight);
-                
+                this.ctx.fillRect(traceX + traceWidth, airBoxY, coplanarGap, airHeight+traceHeight);
+                this.ctx.strokeRect(traceX + traceWidth, airBoxY, coplanarGap, airHeight+traceHeight);
+
                 // Right air region (from right ground to substrate edge)
-                this.ctx.fillRect(rightGroundX + groundWidth, airBoxY, (substrateX + substrateWidth) - (rightGroundX + groundWidth), airHeight);
-                this.ctx.strokeRect(rightGroundX + groundWidth, airBoxY, (substrateX + substrateWidth) - (rightGroundX + groundWidth), airHeight);
+                this.ctx.fillRect(rightGroundX + groundWidth, airBoxY, (substrateX + substrateWidth) - (rightGroundX + groundWidth), airHeight+traceHeight);
+                this.ctx.strokeRect(rightGroundX + groundWidth, airBoxY, (substrateX + substrateWidth) - (rightGroundX + groundWidth), airHeight+traceHeight);
                 break;
                 
             case 'custom':
