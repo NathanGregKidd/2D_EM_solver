@@ -301,16 +301,16 @@ class TransmissionLineGeometry {
             case 'microstrip':
                 // Air wraps around the trace - fills left, top, and right regions
                 // Left air region (from substrate edge to trace)
-                this.ctx.fillRect(substrateX, airBoxY, traceX - substrateX, airHeight+traceHeight);
-                this.ctx.strokeRect(substrateX, airBoxY, traceX - substrateX, airHeight+traceHeight);
+                this.ctx.fillRect(substrateX, airBoxY, traceX - substrateX, airHeight + traceHeight);
+                this.ctx.strokeRect(substrateX, airBoxY, traceX - substrateX, airHeight + traceHeight);
                 
                 // Top air region (above the trace)
                 this.ctx.fillRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
                 this.ctx.strokeRect(traceX, airBoxY, traceWidth, traceY - airBoxY);
                 
                 // Right air region (from trace to substrate edge)
-                this.ctx.fillRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight+traceHeight);
-                this.ctx.strokeRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight+traceHeight);
+                this.ctx.fillRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight + traceHeight);
+                this.ctx.strokeRect(traceX + traceWidth, airBoxY, (substrateX + substrateWidth) - (traceX + traceWidth), airHeight + traceHeight);
                 break;
                 
             case 'stripline':
