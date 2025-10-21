@@ -656,34 +656,643 @@ class TransmissionLineGeometry {
     
     showExportModal() {
         const params = this.getGeometryParams();
-        const geometryData = {
-            timestamp: new Date().toISOString(),
-            transmissionLineType: params.lineType,
-            dimensions: {
-                traceWidth_um: params.traceWidth,
-                traceHeight_um: params.traceHeight,
-                groundThickness_um: params.groundThickness,
-                coplanarGap_um: params.coplanarGap,
-                substrateWidth_um: params.substrateWidth,
-                substrateHeight_um: params.substrateHeight
-            },
-            materials: {
-                substrate: {
-                    relativePermittivity: params.substrateEr,
-                    lossTangent: params.substrateLoss
-                },
-                conductor: {
-                    conductivity_S_per_m: params.conductorSigma
-                }
-            },
-            estimatedParameters: {
-                characteristicImpedance_ohms: parseFloat(document.getElementById('z0-estimate').textContent),
-                effectivePermittivity: parseFloat(document.getElementById('eff-er-estimate').textContent)
-            }
-        };
+        const geometryData = this.buildLayeredGeometry(params);
         
         document.getElementById('export-data').value = JSON.stringify(geometryData, null, 2);
         document.getElementById('export-modal').style.display = 'block';
+    }
+    
+    buildLayeredGeometry(params) {
+        // Build the layered geometry structure based on transmission line type
+        let layers = {};
+        let layerCount = 0;
+        let conductorCount = 0;
+        
+        // Material properties for conductors (copper by default)
+        const copperProperties = {
+            relative_permittivity: 1.0,
+            relative_permeability: 0.999991,
+            resistivity: 1.0 / params.conductorSigma
+        };
+        
+        // Material properties for substrate (FR4 typical)
+        const substrateProperties = {
+            relative_permittivity: params.substrateEr,
+            relative_permeability: 1.0,
+            resistivity: 1e15 // Very high resistivity for dielectric
+        };
+        
+        // Material properties for air
+        const airProperties = {
+            relative_permittivity: 1.0,
+            relative_permeability: 1.0,
+            resistivity: 1e16 // Very high resistivity for air
+        };
+        
+        // Build layers based on transmission line type
+        switch (params.lineType) {
+            case 'microstrip':
+                layers = this.buildMicrostripLayers(params, copperProperties, substrateProperties, airProperties);
+                break;
+            case 'stripline':
+                layers = this.buildStriplineLayers(params, copperProperties, substrateProperties, airProperties);
+                break;
+            case 'coplanar':
+                layers = this.buildCoplanarLayers(params, copperProperties, substrateProperties, airProperties);
+                break;
+            case 'coplanar-with-ground':
+                layers = this.buildCoplanarWithGroundLayers(params, copperProperties, substrateProperties, airProperties);
+                break;
+            case 'grounded-coplanar':
+                layers = this.buildGroundedCoplanarLayers(params, copperProperties, substrateProperties, airProperties);
+                break;
+            case 'custom':
+                layers = this.buildCustomLayers(params, copperProperties, substrateProperties, airProperties);
+                break;
+            default:
+                layers = this.buildMicrostripLayers(params, copperProperties, substrateProperties, airProperties);
+        }
+        
+        // Count layers and conductors
+        layerCount = Object.keys(layers).length;
+        conductorCount = 0;
+        for (const layerKey in layers) {
+            const layer = layers[layerKey];
+            if (layer.elements) {
+                for (const elementKey in layer.elements) {
+                    const element = layer.elements[elementKey];
+                    if (element.type === 'conductor') {
+                        conductorCount++;
+                    }
+                }
+            }
+        }
+        
+        return {
+            metadata: {
+                timestamp: new Date().toISOString(),
+                transmissionLineType: params.lineType,
+                n_layers: layerCount,
+                n_conductors: conductorCount,
+                estimatedParameters: {
+                    characteristicImpedance_ohms: parseFloat(document.getElementById('z0-estimate').textContent),
+                    effectivePermittivity: parseFloat(document.getElementById('eff-er-estimate').textContent)
+                }
+            },
+            layers: layers
+        };
+    }
+    
+    buildMicrostripLayers(params, copperProperties, substrateProperties, airProperties) {
+        const layers = {};
+        
+        // Layer 0: Bottom ground plane
+        layers[0] = {
+            elements: {
+                1: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.groundThickness,
+                    port_number: 0,
+                    isGround: true
+                }
+            }
+        };
+        
+        // Layer 1: Substrate
+        layers[1] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'FR4',
+                    relative_permittivity: substrateProperties.relative_permittivity,
+                    relative_permeability: substrateProperties.relative_permeability,
+                    resistivity: substrateProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.substrateHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 2: Signal trace with air spacers
+        const leftAirWidth = (params.substrateWidth - params.traceWidth) / 2;
+        const rightAirWidth = leftAirWidth;
+        
+        layers[2] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: leftAirWidth,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                },
+                2: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: params.traceWidth,
+                    height: params.traceHeight,
+                    port_number: 1,
+                    isGround: false
+                },
+                3: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: rightAirWidth,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 3: Top air box
+        layers[3] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.airHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        return layers;
+    }
+    
+    buildStriplineLayers(params, copperProperties, substrateProperties, airProperties) {
+        const layers = {};
+        
+        // Layer 0: Bottom ground plane
+        layers[0] = {
+            elements: {
+                1: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.groundThickness,
+                    port_number: 0,
+                    isGround: true
+                }
+            }
+        };
+        
+        // Layer 1: Bottom substrate half
+        layers[1] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'FR4',
+                    relative_permittivity: substrateProperties.relative_permittivity,
+                    relative_permeability: substrateProperties.relative_permeability,
+                    resistivity: substrateProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.substrateHeight / 2,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 2: Signal trace (embedded, centered in substrate)
+        layers[2] = {
+            elements: {
+                1: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: params.traceWidth,
+                    height: params.traceHeight,
+                    port_number: 1,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 3: Top substrate half
+        layers[3] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'FR4',
+                    relative_permittivity: substrateProperties.relative_permittivity,
+                    relative_permeability: substrateProperties.relative_permeability,
+                    resistivity: substrateProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.substrateHeight / 2,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 4: Top ground plane
+        layers[4] = {
+            elements: {
+                1: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.groundThickness,
+                    port_number: 0,
+                    isGround: true
+                }
+            }
+        };
+        
+        return layers;
+    }
+    
+    buildCoplanarLayers(params, copperProperties, substrateProperties, airProperties) {
+        const layers = {};
+        const groundWidth = 50; // Fixed width for ground planes in pixels, needs conversion
+        const groundWidthUm = groundWidth / this.scale; // Convert to micrometers
+        
+        // Calculate element widths for left-to-right ordering
+        const leftAirWidth = (params.substrateWidth - params.traceWidth - 2 * params.coplanarGap - 2 * groundWidthUm) / 2;
+        const rightAirWidth = leftAirWidth;
+        
+        // Layer 0: Substrate
+        layers[0] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'FR4',
+                    relative_permittivity: substrateProperties.relative_permittivity,
+                    relative_permeability: substrateProperties.relative_permeability,
+                    resistivity: substrateProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.substrateHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 1: Coplanar structure - left air, left ground, gap, signal, gap, right ground, right air
+        layers[1] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: leftAirWidth,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                },
+                2: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: groundWidthUm,
+                    height: params.traceHeight,
+                    port_number: 0,
+                    isGround: true
+                },
+                3: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: params.coplanarGap,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                },
+                4: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: params.traceWidth,
+                    height: params.traceHeight,
+                    port_number: 1,
+                    isGround: false
+                },
+                5: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: params.coplanarGap,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                },
+                6: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: groundWidthUm,
+                    height: params.traceHeight,
+                    port_number: 0,
+                    isGround: true
+                },
+                7: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: rightAirWidth,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 2: Top air box
+        layers[2] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.airHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        return layers;
+    }
+    
+    buildCoplanarWithGroundLayers(params, copperProperties, substrateProperties, airProperties) {
+        const layers = {};
+        const groundWidth = 50; // Fixed width for ground planes
+        const groundWidthUm = groundWidth / this.scale;
+        
+        const leftAirWidth = (params.substrateWidth - params.traceWidth - 2 * params.coplanarGap - 2 * groundWidthUm) / 2;
+        const rightAirWidth = leftAirWidth;
+        
+        // Layer 0: Bottom ground plane
+        layers[0] = {
+            elements: {
+                1: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.groundThickness,
+                    port_number: 0,
+                    isGround: true
+                }
+            }
+        };
+        
+        // Layer 1: Substrate
+        layers[1] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'FR4',
+                    relative_permittivity: substrateProperties.relative_permittivity,
+                    relative_permeability: substrateProperties.relative_permeability,
+                    resistivity: substrateProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.substrateHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 2: Coplanar structure with ground planes
+        layers[2] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: leftAirWidth,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                },
+                2: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: groundWidthUm,
+                    height: params.traceHeight,
+                    port_number: 0,
+                    isGround: true
+                },
+                3: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: params.coplanarGap,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                },
+                4: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: params.traceWidth,
+                    height: params.traceHeight,
+                    port_number: 1,
+                    isGround: false
+                },
+                5: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: params.coplanarGap,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                },
+                6: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: groundWidthUm,
+                    height: params.traceHeight,
+                    port_number: 0,
+                    isGround: true
+                },
+                7: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: rightAirWidth,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 3: Top air box
+        layers[3] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.airHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        return layers;
+    }
+    
+    buildGroundedCoplanarLayers(params, copperProperties, substrateProperties, airProperties) {
+        // Similar to coplanar-with-ground but with via connections indicated in metadata
+        return this.buildCoplanarWithGroundLayers(params, copperProperties, substrateProperties, airProperties);
+    }
+    
+    buildCustomLayers(params, copperProperties, substrateProperties, airProperties) {
+        // Basic custom structure - can be extended by users
+        const layers = {};
+        
+        // Layer 0: Substrate
+        layers[0] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'FR4',
+                    relative_permittivity: substrateProperties.relative_permittivity,
+                    relative_permeability: substrateProperties.relative_permeability,
+                    resistivity: substrateProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.substrateHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 1: Signal trace with air spacers
+        const leftAirWidth = (params.substrateWidth - params.traceWidth) / 2;
+        const rightAirWidth = leftAirWidth;
+        
+        layers[1] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: leftAirWidth,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                },
+                2: {
+                    type: 'conductor',
+                    material: 'copper',
+                    relative_permittivity: copperProperties.relative_permittivity,
+                    relative_permeability: copperProperties.relative_permeability,
+                    resistivity: copperProperties.resistivity,
+                    width: params.traceWidth,
+                    height: params.traceHeight,
+                    port_number: 1,
+                    isGround: false
+                },
+                3: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: rightAirWidth,
+                    height: params.traceHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        // Layer 2: Top air box
+        layers[2] = {
+            elements: {
+                1: {
+                    type: 'dielectric',
+                    material: 'air',
+                    relative_permittivity: airProperties.relative_permittivity,
+                    relative_permeability: airProperties.relative_permeability,
+                    resistivity: airProperties.resistivity,
+                    width: params.substrateWidth,
+                    height: params.airHeight,
+                    port_number: null,
+                    isGround: false
+                }
+            }
+        };
+        
+        return layers;
     }
     
     hideExportModal() {
